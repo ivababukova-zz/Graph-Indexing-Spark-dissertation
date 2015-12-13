@@ -1,0 +1,32 @@
+\begin{thebibliography}{1}
+
+\bibitem{ckt}
+Peter Cheeseman, Bob Kanefsky, and William~M. Taylor.
+\newblock {Where the really hard problems are}.
+\newblock In {\em Proceedings {IJCAI'91}}, pages 331--337, 1991.
+
+\bibitem{ctindex}
+P.~Mutzel K.~Klein, N.~Kriege.
+\newblock Ct-index: Fingerprint-based graph indexing combining cycles and
+  trees.
+\newblock {\em Data Engineering (ICDE), 2011 IEEE 27th International
+  Conference, Hannover}, pages 1115 -- 1126, 11-16 April 2011.
+
+\bibitem{graphX}
+Reynold Xin, Joseph Gonzalez, Daniel Crankshaw, Michael Franklin, Ankur Dave,
+  and Ion Stoica.
+\newblock Graphx: Unifying data-parallel and graph-parallel analytics.
+\newblock February 2014.
+
+\bibitem{freqStructBasedIndexing}
+Xifeng Yan, Philip~S. Yu, and Jiawei Han.
+\newblock Graph indexing: A frequent structure-based approach, 2004.
+
+\bibitem{rdds}
+Matei Zaharia, Mosharaf Chowdhury, Ankur Dave, Michael Franklin, and Ion
+  Stoica.
+\newblock Resilient distributed datasets: A fault-tolerant abstraction for
+  in-memory cluster computing.
+\newblock {\em NSDI 2012}, 2012.
+
+\end{thebibliography}
