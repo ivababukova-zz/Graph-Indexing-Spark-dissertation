@@ -165,6 +165,8 @@ The quick brown fox jumped over \cite{graphX} the lazy dog.
 
         
 \chapter{Graph Indexing}
+- smaller $C$, less time spent on subgraph isomorphism check, but more tie spent on indexing process
+
 	\section{Motivation for usage}
 	\section{Common techniques}
     	\subsection{Graph-mining}
@@ -212,6 +214,8 @@ The quick brown fox jumped over \cite{graphX} the lazy dog.
     Strengths and weaknesses of this approach ...
     
     \section{IB-Index algorithms}
+    
+    %%% all index algorithms follow this approach? maybe move it to prev chapter?
     All algorithms described in this section generate the candidate set of graphs in the following steps:
     
     \begin{enumerate}
@@ -227,39 +231,60 @@ The quick brown fox jumped over \cite{graphX} the lazy dog.
     All implementations compared with CT-Index, and compared between themselves
     
 \section{IB-Index 1}
-    This section gives an overview of the first indexing technique that was implemented and compared with CT-Index. The following subsections describe the main idea of the algorithm, how it was implemented and its performance.
+    This section gives an overview of the first indexing technique that we designed, implemented and compared with CT-Index. The following subsections describe the main idea of the algorithm, how it was implemented and its performance.
     \subsection{The idea}
-        
-        We enumerate exhaustively all paths for every $t$ in $T$ up to a specified maximum path length $maxLen$. The resulting paths are the index of $T$.
-        
-        - compute unique path for every t
-        
-        For example, the index of the graph on figure \ref{C5H11} consists of the paths \texttt{C, H, C-H, C-C, H-C-H, H-C-C, C-C-C} for maxLen=3.
-        
-        We store the extracted paths in a file. In order to compute the candidate set C of graphs in T that are to be checked for subgraph isomorphism, IB-Index does the following:
-
-        We do the same for every \texttt{p} in \texttt{P} and store the paths in another file : \texttt{patternIndex}. After \texttt{targetIndex} and \texttt{patternIndex} are computed, we generate the candidate set \texttt{C} that contains all \texttt{t} in \texttt{T} that contain all paths, stored in \texttt{patternIndex}. \texttt{C} is the set of all graphs that might be subgraph isomorphic to the patterns in \texttt{P}. Subgraph isomorphism check needs to be computed only for the graphs in \texttt{C}. The set of target graphs  \texttt{V} isomorphic to all patterns in  \texttt{P} will be contained in  \texttt{C}.\newline
-
+    % the theory of the method %
+    The algorithm follows the exhaustive path-enumeration approach, also used in other indexing techniques like GraphGrepSX.%%cite!!!!
+    
+    IB-Index computes the index of a graph by enumerating exhaustively all paths it has up to a specified maximum path length $maxLen$. The index of every graph $t$ in $T$ is stored into a file, called target index. The file  is used for computing the set $C$ of all graphs in $T$ that are to be checked for subgraph isomorphism to another set of pattern graphs $P$. We use the target and the pattern indexes to generate the candidate set $C$ which contains all graphs candidates from $T$ for subgraph isomorphism with the pattern in $P$. Using the target index, we check which target graphs contain all paths in the pattern index. All graphs from $T$ that contain the paths stored in the pattern index form the candidate set $C$.  
+    
 \begin{figure}[h]
 \centering
 \begin{minipage}{.5\textwidth}
   \centering
-  \includegraphics[height=4cm,width=9cm]{C5H11.png}
+  \includegraphics[height=4cm,width=9cm]{graphs_paths/C5H11.png}
   \caption{Target Graph}
   \label{C5H11}
 \end{minipage}%
 \begin{minipage}{.5\textwidth}
   \centering
-  \includegraphics[height=4cm,width=4cm]{CH3.png}
+  \includegraphics[height=4cm,width=4cm]{graphs_paths/CH3.png}
   \caption{Pattern graph}
   \label{CH3}
 \end{minipage}
 \end{figure}
+    
+    %%random sentence:
+    %We do this procedure for every $t$ in $T$ until all paths of every target graph are extracted and added to the index file.
+    The procedure of extracting $C$ from $T$ with IB-Index is done as follows:
+    % example %
+    Let the graph on figure \ref{C5H11} be a target graph in $T$, the graph on figure \ref{CH3} be a pattern graph in $P$ and $maxLen$ be equal to 3. In order to check whether \ref{C5H11} is a candidate for subgraph isomorphism with \ref{CH3}, we first compute the indexes of \ref{C5H11} and \ref{CH3} for the specified maximum path length. The target index consists of the paths on figure \ref{C5H11-paths} and the pattern index contains the paths on figure \ref{CH3-paths}.
+    
+    After candidate extraction, IB-Index 1 returns target graph \ref{C5H11} as candidate for subgraph isomorphism with pattern graph \ref{CH3}, as all paths in \ref{CH3}, shown on figure \ref{CH3-paths} are contained in \ref{C5H11}, shown on figure \ref{C5H11-paths}. 
+    
+	We avoid storing the same paths in the index more than once in the following way. Before storing a path $path$ in the index, we reverse it and check whether $reversed-path$ is lexicographically smaller than $path$. We store the smallest variant of the path in the index file.
 
+\begin{figure}[h]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3.5cm,width=2.5cm]{graphs_paths/C5H11-paths.png}
+  \caption{Target graph path enumeration}
+  \label{C5H11-paths}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=2.5cm,width=2cm]{graphs_paths/CH3-paths.png}
+  \caption{Pattern graph path enumeration}
+  \label{CH3-paths}
+\end{subfigure}
+\caption{All paths up to maximum length 3}
+\label{pathsEnumeration}
+\end{figure}
          
 \subsection{Implementation}
 \subsubsection{Graph representation}
-	Each graph object has an integer id and is composed of a collection of node objects. Each node object has an ID, a label and a list of edge objects, where the node is a source node for each edge contained in the list. The length of the list of the edge object is equal to the degree of the node. Therefore, each edge object does not need to keep a record of the source node: it only has a label and a destination node as fields.
+	Each graph object has an integer id and is composed of a collection of node objects. Each node object has an id, a label and a list of edge objects, where the node is a source node for each edge contained in the list. The length of the list of the edge object is equal to the degree of the node. Therefore, each edge object does not need to keep a record of the source node: it only has a label and a destination node as fields.
     
     The edge representation works for both directed and undirected graphs. If the graph is directed, only one edge object is created for each edge of the graph. If the graph is not directed, two edge objects will be created. The first one with one of the nodes as destination node and then added in the list of edges of the other node: the source node. The second edge object will have the source node of the first edge object as destination node and included in the list of edges of the destination node of the first edge object, which will be its source node. The label of both edge objects will be the same.
     
@@ -269,51 +294,33 @@ The quick brown fox jumped over \cite{graphX} the lazy dog.
 \centering
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[height=0.8cm,width=2cm]{A-Bdirected.png}
+  \includegraphics[height=0.8cm,width=2cm]{graphs_paths/A-Bdirected.png}
   \caption{Directed graph}
   \label{directed}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[height=1cm,width=2cm]{A-B.png}
+  \includegraphics[height=1cm,width=2cm]{graphs_paths/A-B.png}
   \caption{Undirected graph}
   \label{undirected}
 \end{subfigure}
 \caption{An edge between the nodes A and B for directed an undirected graphs}
 \label{A-B}
 \end{figure}
-    
-%%\begin{figure}[h]
-%%\centering
-%%\includegraphics[height=1cm,width=2cm]{A-B.png}
-%%\caption{Two nodes and an edge between them to be removed $*****$}
-%%\label{A-B}
-%%\end{figure}
          
-\subsubsection{Path enumeration approach} %% an example
+\subsubsection{Path enumeration}
 
-Figures \ref{C5H11-paths} and \ref{CH3-paths} show all paths of the target graph \ref{C5H11} and the pattern \ref{CH3} that will be extracted and saved in the graph index using our algorithm.
+- we have stack: it is used for generating the path: an arraylist of nodes. It is also used for finding whether the current node has been visited in this iteration
+- explain the isVisited property each node has and why do we need it as well as the stack
+- the bug with visited nodes I had initially, how the stack was fixed
 
-\begin{figure}[h]
-\centering
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[height=3.5cm,width=2.5cm]{C5H11-paths.png}
-  \caption{Target graph path enumeration}
-  \label{C5H11-paths}
-\end{subfigure}%
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[height=2.5cm,width=2cm]{CH3-paths.png}
-  \caption{Pattern graph path enumeration}
-  \label{CH3-paths}
-\end{subfigure}
-\caption{All paths up to maximum length 3}
-\label{A-B}
-\end{figure}
+   Let us consider a graph $g$ with $n$ number of nodes and $m$ number of different labels, where $m$ $<$ $n$ and assume we want to extract all paths of maximum path length $maxLen$.
+   Separate class includes all functionality needed to compute the index. Path extraction is done using a depth-first-search based algorithm and we use stack to keep the visited nodes as well as to generate the path string, stored in the index file.  
+   The graph is visited $n$ times, with each node in $g$ as start node. We push the start node on the stack (the stack is emptied before that) and we ....
 
 
-Mention the bug with visited nodes and how it was fixed. Mention how the nodes that are currently on the stack are used to generate the paths.
+%Figures \ref{C5H11-paths} and \ref{CH3-paths} show all paths of the target graph \ref{C5H11} and the pattern \ref{CH3} that will be extracted and saved in the graph index using our algorithm.
+
 
 \subsubsection{Candidates extraction}
          
@@ -324,16 +331,39 @@ Mention the bug with visited nodes and how it was fixed. Mention how the nodes t
             The index file is very big --- compare sizes with CT-Index
 \subsection{Performance}
   As this approach is very naive, we expected it to show very poor performance. The actual results were surprisingly bad. IB-Index 1 does not only run extremely slow, but it doesn't manage to filter our any of the target graphs. The index file produced contains over 8 million paths and the running time of the program is ... compared to CT-Index with running time ... !
-            
+	\subsubsection{Limitations}
+
+
+
 \section{IB-Index 2}    
   isomers
 \subsection{The idea}
         - why do I think it is better
+        - explain about containment, how it works
         - picture with worked example to show that it eliminates more graphs than the first technique
+       
+\begin{figure}[h]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=8cm,width=4cm]{graphs_paths/C5H11-isomer-paths.png}
+  \caption{Target graph path enumeration}
+  \label{C5H11-isomer-paths}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3cm,width=3.5cm]{graphs_paths/CH3-isomer-paths.png}
+  \caption{Pattern graph path enumeration}
+  \label{CH3-isomer-paths}
+\end{subfigure}
+\caption{All paths up to maximum length 3}
+\label{isomer-paths-enumeration}
+\end{figure}
        
        \subsection{Implementation}
        
        - extend IB-Index 1 and put an option to extract paths using isomer labels.
+       - describe the extension of the project to support both types of indexing
        
         \subsection{Performance}
         - the index file is bigger, but the candidate set is smaller
